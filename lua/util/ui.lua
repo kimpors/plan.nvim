@@ -3,15 +3,25 @@ local M = {
   win = 0,
 }
 
-function M.Render(opts)
+function Render(opts)
   M.buf = API.nvim_create_buf(false, true)
-  M.win = API.nvim_open_win(M.buf, true, { relative='win', row=1, col=1, width=35, height=5 })
+  M.win = API.nvim_open_win(M.buf, true,  opts)
+end
+
+function M.Menu(opts)
+  Render({
+      relative = "editor",
+			width = 50,
+			height = 20,
+			row = 10,
+			col = 10,
+			style = "minimal",
+			border = "rounded",
+    })
 
   API.nvim_buf_set_option(M.buf, "modifiable", true)
   API.nvim_buf_set_lines(M.buf, -2, 1, false, opts)
 	API.nvim_buf_set_option(M.buf, "modifiable", false)
-
-  return M.buf, M.win
 end
 
 return M
