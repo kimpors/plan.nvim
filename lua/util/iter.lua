@@ -4,6 +4,22 @@ local M = {
   list = {},
 }
 
+function M.next()
+  M.index = M.index + 1
+
+  if M.index >= M.length then
+    M.index = M.length
+  end
+end
+
+function M.previous()
+  M.index = M.index - 1
+
+  if M.index < 1 then
+    M.index = 1
+  end
+end
+
 function M.add(opts)
   M.length = M.length + 1
 
