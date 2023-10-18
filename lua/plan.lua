@@ -1,8 +1,5 @@
 local M = {}
 
-PLANS.add("Hello -_-")
-PLANS.add("Here your plans:")
-
 function M.MoveUp()
   PLANS.previous()
   API.nvim_win_set_cursor(UI.win, { PLANS.index, 0 })
@@ -14,18 +11,21 @@ function M.MoveDown()
 end
 
 function M.Add()
+  print(PLANS.index)
   PLANS.add("")
   Update()
 
   PLANS.index = PLANS.length
+  print(PLANS.index)
   API.nvim_win_set_cursor(UI.win, { PLANS.length, 0 } )
   API.nvim_buf_set_option(UI.buf, "modifiable", true)
   API.nvim_command(":star")
 end
 
 function M.Save()
+  API.nvim_win_set_cursor(UI.win, { PLANS.index, 0 })
+
   local save = API.nvim_buf_get_lines(UI.buf, PLANS.index - 1, PLANS.index, true)
-  print(save[1])
   PLANS.list[PLANS.index] = save[1]
   Update()
 end
@@ -59,7 +59,8 @@ function Update()
 end
 
 function M.Open()
-  API.nvim_create_autocmd("InsertLeave", { command = "lua require('plan').Save()" })
+  PLANS.list = STATE.Load()
+  PLANS.length = #PLANS.list
 
   UI.Menu(PLANS.list)
   KEYMAP.set(UI.buf,
@@ -71,6 +72,18 @@ function M.Open()
     a = "Add()",
     q = "Exit()"
   })
+
+  API.nvim_create_autocmd("InsertLeave",{
+    callback = function ()
+      M.Save()
+    end,
+    buffer = UI.buf})
+
+  API.nvim_create_autocmd("BufLeave",{
+    callback = function ()
+      STATE.Save(PLANS.list)
+    end,
+    buffer = UI.buf})
 end
 
 return M

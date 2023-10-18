@@ -4,7 +4,7 @@ local M = {
 }
 
 function Render(opts)
-  M.buf = API.nvim_create_buf(false, true)
+  M.buf = API.nvim_create_buf(true, true)
   M.win = API.nvim_open_win(M.buf, true, opts)
 end
 
