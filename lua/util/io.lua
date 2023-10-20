@@ -4,20 +4,35 @@ local M = {
 
 local msg = { "-_- empty here, don't you think" }
 
-function M.Save(list)
+function M.GetFileNames()
+  local names = {}
+  local i = 0
+  local path = API.nvim_command_output("echo stdpath('cache')")
+  local files = io.popen("ls " .. path .. "/plan.nvim")
+
+  for name in files:lines() do
+    i = i + 1
+    names[i] = name
+  end
+
+  files:close()
+  return names
+end
+
+function M.Save(filename, content)
   vim.cmd("silent !mkdir -p " .. M.path)
 
-  local file = io.open(M.path .. "cache", "w")
+  local file = io.open(M.path .. filename, "w")
 
-  for _, value in ipairs(list) do
+  for _, value in ipairs(content) do
     file:write(value .. "\n")
   end
 
   file:close()
 end
 
-function M.Load()
-	local file = io.open(M.path .. "cache", "r")
+function M.Load(filename)
+	local file = io.open(M.path .. filename, "r")
 
   if file == nil then
     return msg

@@ -11,12 +11,10 @@ function M.MoveDown()
 end
 
 function M.Add()
-  print(PLANS.index)
   PLANS.add("")
   Update()
 
   PLANS.index = PLANS.length
-  print(PLANS.index)
   API.nvim_win_set_cursor(UI.win, { PLANS.length, 0 } )
   API.nvim_buf_set_option(UI.buf, "modifiable", true)
   API.nvim_command(":star")
@@ -49,7 +47,9 @@ end
 
 function M.Remove()
   PLANS.remove(PLANS.index)
-  Update()
+  API.nvim_buf_set_option(UI.buf, "modifiable", true)
+  API.nvim_del_current_line()
+	API.nvim_buf_set_option(UI.buf, "modifiable", false)
 end
 
 function Update()
@@ -58,17 +58,51 @@ function Update()
 	API.nvim_buf_set_option(UI.buf, "modifiable", false)
 end
 
-function M.Open()
-  PLANS.list = STATE.Load()
+function Menu()
+  API.nvim_buf_set_option(UI.buf, "modifiable", true)
+	API.nvim_buf_set_lines(UI.buf, 0, -1, false, STATE.GetFileNames())
+	API.nvim_buf_set_option(UI.buf, "modifiable", false)
+end
+
+function M.Dialog()
+  PLANS.list = STATE.GetFileNames()
   PLANS.length = #PLANS.list
 
   UI.Menu(PLANS.list)
-  KEYMAP.set(UI.buf,
+  KEYMAP.Set(UI.buf,
   {
     k = "MoveUp()",
     j = "MoveDown()",
-    o = "Remove()",
+    o = "Open(PLANS.list[PLANS.index])",
+    a = "Add()",
+    q = "Exit()"
+  })
+
+  API.nvim_create_autocmd("InsertLeave",{
+    callback = function ()
+      M.Save()
+      STATE.Save(PLANS.list[PLANS.index], {})
+    end,
+    buffer = UI.buf})
+
+  API.nvim_create_autocmd("BufLeave",{
+    callback = function ()
+      M.Exit()
+    end,
+    buffer = UI.buf})
+end
+
+function M.Open(filename)
+  PLANS.list = STATE.Load(filename)
+  PLANS.length = #PLANS.list
+
+  UI.Menu(PLANS.list)
+  KEYMAP.Set(UI.buf,
+  {
+    k = "MoveUp()",
+    j = "MoveDown()",
     l = "Switch()",
+    o = "Remove()",
     a = "Add()",
     q = "Exit()"
   })
@@ -81,7 +115,7 @@ function M.Open()
 
   API.nvim_create_autocmd("BufLeave",{
     callback = function ()
-      STATE.Save(PLANS.list)
+      STATE.Save(filename, PLANS.list)
     end,
     buffer = UI.buf})
 end
