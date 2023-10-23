@@ -2,9 +2,7 @@ local M = {
   path = API.nvim_command_output("echo stdpath('cache')") .. "/plan.nvim/"
 }
 
-local msg = { "-_- empty here, don't you think" }
-
-function M.GetFileNames()
+function M.getNames()
   local names = {}
   local i = 0
   local path = API.nvim_command_output("echo stdpath('cache')")
@@ -19,7 +17,7 @@ function M.GetFileNames()
   return names
 end
 
-function M.Save(filename, content)
+function M.save(filename, content)
   vim.cmd("silent !mkdir -p " .. M.path)
 
   local file = io.open(M.path .. filename, "w")
@@ -31,12 +29,8 @@ function M.Save(filename, content)
   file:close()
 end
 
-function M.Load(filename)
+function M.load(filename)
 	local file = io.open(M.path .. filename, "r")
-
-  if file == nil then
-    return msg
-  end
 
   local line = ""
   local output = {}
@@ -55,11 +49,11 @@ function M.Load(filename)
 
 	file:close()
 
-  if index == 1 then
-    return msg
-  end
-
   return output
+end
+
+function M.remove(filename)
+  os.remove(M.path .. filename)
 end
 
 return M

@@ -1,13 +1,15 @@
 local M = {}
 
-function M.MoveUp()
-  PLANS.previous()
-  API.nvim_win_set_cursor(UI.win, { PLANS.index, 0 })
+function M.Next()
+  if PLANS.next() then
+    API.nvim_win_set_cursor(UI.win, { PLANS.index, 0 })
+  end
 end
 
-function M.MoveDown()
-  PLANS.next()
-  API.nvim_win_set_cursor(UI.win, { PLANS.index, 0 })
+function M.Previous()
+  if PLANS.previous() then
+    API.nvim_win_set_cursor(UI.win, { PLANS.index, 0 })
+  end
 end
 
 function M.Add()
@@ -16,29 +18,35 @@ function M.Add()
 
   PLANS.index = PLANS.length
   API.nvim_win_set_cursor(UI.win, { PLANS.length, 0 } )
-  API.nvim_buf_set_option(UI.buf, "modifiable", true)
   API.nvim_command(":star")
 end
 
-function M.Save()
+function M.Save(format)
   API.nvim_win_set_cursor(UI.win, { PLANS.index, 0 })
 
   local save = API.nvim_buf_get_lines(UI.buf, PLANS.index - 1, PLANS.index, true)
-  PLANS.list[PLANS.index] = save[1]
+
+  PLANS.current(format .. save[1])
   Update()
+end
+
+function M.ToPlans()
+  M.Exit()
+  M.Dialog()
 end
 
 function M.Exit()
   API.nvim_win_close(UI.win, true)
 end
 
+
 function M.Switch()
   local current = PLANS.list[PLANS.index]
 
-  if current:sub(1, 1) == "\t" then
-    current = current:sub(2, -1)
+  if current:sub(2, 2) == "x" then
+    current = current:sub(1, 1) .. current:sub(3)
   else
-    current = "\t" .. current
+    current = current:sub(1, 1) .. "x" .. current:sub(2)
   end
 
   PLANS.list[PLANS.index] = current
@@ -47,41 +55,48 @@ end
 
 function M.Remove()
   PLANS.remove(PLANS.index)
-  API.nvim_buf_set_option(UI.buf, "modifiable", true)
   API.nvim_del_current_line()
-	API.nvim_buf_set_option(UI.buf, "modifiable", false)
+
+  if PLANS.next() then
+    PLANS.index = PLANS.index - 1
+  end
+end
+
+function M.RemovePlan()
+  STATE.remove(PLANS.list[PLANS.index])
+  PLANS.remove(PLANS.index)
+  API.nvim_del_current_line()
+
+  if PLANS.next() then
+    PLANS.index = PLANS.index - 1
+  end
 end
 
 function Update()
-  API.nvim_buf_set_option(UI.buf, "modifiable", true)
 	API.nvim_buf_set_lines(UI.buf, 0, -1, false, PLANS.list)
-	API.nvim_buf_set_option(UI.buf, "modifiable", false)
-end
-
-function Menu()
-  API.nvim_buf_set_option(UI.buf, "modifiable", true)
-	API.nvim_buf_set_lines(UI.buf, 0, -1, false, STATE.GetFileNames())
-	API.nvim_buf_set_option(UI.buf, "modifiable", false)
 end
 
 function M.Dialog()
-  PLANS.list = STATE.GetFileNames()
+  PLANS.list = STATE.getNames()
+  PLANS.index = 1
   PLANS.length = #PLANS.list
 
-  UI.Menu(PLANS.list)
-  KEYMAP.Set(UI.buf,
+  UI.window(PLANS.list)
+
+  KEYMAP.set(UI.buf,
   {
-    k = "MoveUp()",
-    j = "MoveDown()",
-    o = "Open(PLANS.list[PLANS.index])",
+    j = "Next()",
+    k = "Previous()",
+    l = "Open(PLANS.list[PLANS.index])",
+    x = "RemovePlan()",
     a = "Add()",
     q = "Exit()"
   })
 
   API.nvim_create_autocmd("InsertLeave",{
     callback = function ()
-      M.Save()
-      STATE.Save(PLANS.list[PLANS.index], {})
+      M.Save("")
+      STATE.save(PLANS.list[PLANS.index], {})
     end,
     buffer = UI.buf})
 
@@ -93,29 +108,32 @@ function M.Dialog()
 end
 
 function M.Open(filename)
-  PLANS.list = STATE.Load(filename)
+  PLANS.list = STATE.load(filename)
+  PLANS.index = 1
   PLANS.length = #PLANS.list
 
-  UI.Menu(PLANS.list)
-  KEYMAP.Set(UI.buf,
+  UI.window(PLANS.list)
+
+  KEYMAP.set(UI.buf,
   {
-    k = "MoveUp()",
-    j = "MoveDown()",
+    j = "Next()",
+    k = "Previous()",
     l = "Switch()",
-    o = "Remove()",
+    x = "Remove()",
     a = "Add()",
+    h = "ToPlans()",
     q = "Exit()"
   })
 
   API.nvim_create_autocmd("InsertLeave",{
     callback = function ()
-      M.Save()
+      M.Save("[]\t")
     end,
     buffer = UI.buf})
 
   API.nvim_create_autocmd("BufLeave",{
     callback = function ()
-      STATE.Save(filename, PLANS.list)
+      STATE.save(filename, PLANS.list)
     end,
     buffer = UI.buf})
 end

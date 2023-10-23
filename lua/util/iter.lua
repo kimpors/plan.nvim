@@ -4,12 +4,23 @@ local M = {
   list = {},
 }
 
+function M.current(value)
+  if not (value == nil) then
+    M.list[M.index] = value
+  else
+    return M.list[M.index]
+  end
+end
+
 function M.next()
   M.index = M.index + 1
 
-  if M.index >= M.length then
-    M.index = M.length
+  if M.index > M.length then
+    M.index = M.index - 1
+    return false
   end
+
+  return true
 end
 
 function M.previous()
@@ -17,7 +28,10 @@ function M.previous()
 
   if M.index < 1 then
     M.index = 1
+    return false
   end
+
+  return true
 end
 
 function M.add(opts)

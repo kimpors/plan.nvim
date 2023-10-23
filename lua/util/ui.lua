@@ -8,7 +8,7 @@ function Render(opts)
   M.win = API.nvim_open_win(M.buf, true, opts)
 end
 
-function M.Menu(opts)
+function M.window(opts)
   Render({
       relative = "win",
 			width = 50,
@@ -21,7 +21,6 @@ function M.Menu(opts)
 
   API.nvim_buf_set_option(M.buf, "modifiable", true)
   API.nvim_buf_set_lines(M.buf, -2, -1, false, opts)
-	API.nvim_buf_set_option(M.buf, "modifiable", false)
 end
 
 return M

@@ -1,6 +1,6 @@
 local M = {}
 
-function M.Set(buf, keymaps)
+function M.set(buf, keymaps)
 	local except = ""
 
 	for key, _ in pairs(keymaps) do
