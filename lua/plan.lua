@@ -1,33 +1,40 @@
-local M = {}
+local M = {
+  offset = 0,
+  layout = {
+    header = {},
+    main = {},
+    footer = {}
+  }
+}
 
 function M.Next()
   if PLANS.next() then
-    API.nvim_win_set_cursor(UI.win, { PLANS.index, 0 })
+    API.nvim_win_set_cursor(UI.win, { PLANS.index + M.offset, 0 })
   end
 end
 
 function M.Previous()
   if PLANS.previous() then
-    API.nvim_win_set_cursor(UI.win, { PLANS.index, 0 })
+    API.nvim_win_set_cursor(UI.win, { PLANS.index + M.offset, 0 })
   end
 end
 
 function M.Add()
   PLANS.add("")
-  Update()
+  UI.update(M.layout)
 
   PLANS.index = PLANS.length
-  API.nvim_win_set_cursor(UI.win, { PLANS.length, 0 } )
+  API.nvim_win_set_cursor(UI.win, { PLANS.length + M.offset, 0 } )
   API.nvim_command(":star")
 end
 
 function M.Save(format)
-  API.nvim_win_set_cursor(UI.win, { PLANS.index, 0 })
+  API.nvim_win_set_cursor(UI.win, { PLANS.index + M.offset, 0 })
 
-  local save = API.nvim_buf_get_lines(UI.buf, PLANS.index - 1, PLANS.index, true)
+  local line = API.nvim_buf_get_lines(UI.buf, PLANS.index - 1 + M.offset, PLANS.index + M.offset, true)
 
-  PLANS.current(format .. save[1])
-  Update()
+  PLANS.current(format .. line[1])
+  UI.update(M.layout)
 end
 
 function M.ToPlans()
@@ -39,7 +46,6 @@ function M.Exit()
   API.nvim_win_close(UI.win, true)
 end
 
-
 function M.Switch()
   local current = PLANS.list[PLANS.index]
 
@@ -50,7 +56,7 @@ function M.Switch()
   end
 
   PLANS.list[PLANS.index] = current
-  Update()
+  UI.update(M.layout)
 end
 
 function M.Remove()
@@ -72,16 +78,26 @@ function M.RemovePlan()
   end
 end
 
-function Update()
-	API.nvim_buf_set_lines(UI.buf, 0, -1, false, PLANS.list)
-end
-
 function M.Dialog()
   PLANS.list = STATE.getNames()
-  PLANS.index = 1
   PLANS.length = #PLANS.list
+  PLANS.index = 1
 
-  UI.window(PLANS.list)
+
+  M.layout = {
+    header = {
+      "Plans",
+      "==========",
+    },
+    main = PLANS.list,
+    footer = {
+      "=========="
+    }
+  }
+
+  M.offset = #M.layout.header
+  UI.window().update(M.layout)
+  API.nvim_win_set_cursor(UI.win, { PLANS.index + M.offset, 0 })
 
   KEYMAP.set(UI.buf,
   {
@@ -109,10 +125,24 @@ end
 
 function M.Open(filename)
   PLANS.list = STATE.load(filename)
-  PLANS.index = 1
   PLANS.length = #PLANS.list
+  PLANS.index = 1
 
-  UI.window(PLANS.list)
+  M.layout = {
+    header = {
+      "Tasks",
+      "=========="
+    },
+    main = PLANS.list,
+    footer = {
+      "=========="
+    }
+  }
+
+  M.offset = #M.layout.header
+
+  UI.window().update(M.layout)
+  API.nvim_win_set_cursor(UI.win, { PLANS.index + M.offset, 0 })
 
   KEYMAP.set(UI.buf,
   {

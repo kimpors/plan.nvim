@@ -8,7 +8,7 @@ function Render(opts)
   M.win = API.nvim_open_win(M.buf, true, opts)
 end
 
-function M.window(opts)
+function M.window()
   Render({
       relative = "win",
 			width = 50,
@@ -20,7 +20,15 @@ function M.window(opts)
     })
 
   API.nvim_buf_set_option(M.buf, "modifiable", true)
-  API.nvim_buf_set_lines(M.buf, -2, -1, false, opts)
+
+  return M
+end
+
+function M.update(layout)
+	API.nvim_buf_set_lines(M.buf, -2, -1, false, layout.header)
+	API.nvim_buf_set_lines(M.buf, #layout.header, -1, false, layout.main)
+	API.nvim_buf_set_lines(M.buf, (#layout.header + #layout.main), -1, false, layout.footer)
+  return M
 end
 
 return M

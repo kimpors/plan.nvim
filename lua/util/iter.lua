@@ -1,5 +1,5 @@
 local M = {
-  index = 1,
+  index = 0,
   length = 0,
   list = {},
 }
