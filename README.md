@@ -8,6 +8,7 @@ Simple todo list.
 
 ## Installation
 
+`lazy`
 ```
 return {
   "kimpors/plan.nvim",
